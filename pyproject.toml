@@ -72,11 +72,14 @@ include-package-data = true
 
 # We read the version from a file in 'verl/version/version'
 [tool.setuptools.dynamic]
-version = {file = "verl/version/version"}
+version = {file = "alphaapollo/core/generation/verl/version/version"}
 
 # If you need to mimic `package_dir={'': '.'}`:
 [tool.setuptools.package-dir]
-"" = "."
+"" = "alphaapollo/core/generation"
+
+[tool.setuptools.packages.find]
+where = ["alphaapollo/core/generation"]
 
 # If you need to include specific non-Python data (like YAML files or version file):
 # This is the rough equivalent of package_data={'': ['version/*'], 'verl': ['trainer/config/*.yaml']}

@@ -18,12 +18,14 @@ from pathlib import Path
 
 from setuptools import find_packages, setup
 
-version_folder = os.path.dirname(os.path.join(os.path.abspath(__file__)))
+project_root = os.path.dirname(os.path.abspath(__file__))
+verl_root = os.path.join(project_root, "alphaapollo", "core", "generation", "verl")
 
-with open(os.path.join(version_folder, "verl/version/version")) as f:
+with open(os.path.join(verl_root, "version", "version")) as f:
     __version__ = f.read().strip()
 
 install_requires = [
+    "setuptools",
     "accelerate",
     "codetiming",
     "colorlog",
@@ -81,8 +83,16 @@ long_description = (this_directory / "README.md").read_text()
 setup(
     name="verl",
     version=__version__,
-    package_dir={"": "."},
-    packages=find_packages(where="."),
+    package_dir={
+        "": "alphaapollo/core/generation",  # install top-level package `verl`
+        "alphaapollo.environments": "alphaapollo/core/environments",  # required by verl (can't edit verl)
+    },
+    packages=find_packages(where="alphaapollo/core/generation")
+    + ["alphaapollo.environments"]
+    + [
+        f"alphaapollo.environments.{p}"
+        for p in find_packages(where="alphaapollo/core/environments")
+    ],
     url="https://github.com/volcengine/verl",
     license="Apache 2.0",
     author="Bytedance - Seed - MLSys",

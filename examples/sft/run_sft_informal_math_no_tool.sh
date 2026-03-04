@@ -5,8 +5,8 @@ nproc_per_node=2
 
 data_source='DigitalLearningGmbH/MATH-lighteval'
 
-python3 -m examples.data_preprocess.prepare_sft_no_tool \
-    --data_source $data_source 
+python3 -m alphaapollo.data_preprocess.prepare_sft_no_tool \
+    --data_source $data_source
 
 torchrun --standalone --nnodes=1 --nproc_per_node=$nproc_per_node \
      -m verl.trainer.fsdp_sft_trainer \

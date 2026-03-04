@@ -8,11 +8,7 @@
 </p>
 
 
-AlphaApollo is an agentic reasoning framework that integrates multiple models and tools to enable iterative, verifiable, and self-evolving reasoning.
-
-It supports a wide range of agentic reasoning paradigms, including tool-integrated reasoning, agentic post-training (multi-turn SFT and reinforcement learning), and agentic self-evolution. AlphaApollo incorporates multiple post-training algorithms such as PPO, GRPO, and DAPO, and provides dataset-backed agentic evaluation pipelines.
-
-AlphaApollo also offers flexible and extensible agentic environments and tool-set configurations, allowing users to easily customize, extend, and scale agentic reasoning workflows.
+AlphaApollo is an agentic reasoning framework that orchestrates multiple models and tools to enable iterative, verifiable, and self-evolving reasoning. It supports a broad range of paradigms, including tool-integrated reasoning, agentic post-training (e.g., multi-turn supervised fine-tuning and reinforcement learning), and agentic self-evolution. The framework offers extensible environments and toolsets for easy customization, extension, and scalable deployment of agentic reasoning workflows.
 
 
 ## News
@@ -33,76 +29,140 @@ bash installation.sh
 ```
 
 ## Supported features
-### Agentic reasoning
+### [Agentic reasoning](https://alphaapollo.org/multi-turn-agentic-reasoning)
 - Tool-integrated reasoning rollout with seamless environment interaction
 - Dynamic memory updates for multi-turn reasoning
 
-### Agentic learning
+### [Agentic learning](https://alphaapollo.org/multi-turn-agentic-learning)
 - Multi-turn supervised fine-tuning (SFT)
-- Reinforcement learning algorithms: GRPO, PPO, DAPO, and more.
+- Reinforcement learning algorithms: GRPO, PPO, DAPO, and more
 
-### Agentic self-evolution
+### [Agentic self-evolution](https://alphaapollo.org/multi-round-agentic-evolution)
 - Multi-round, multi-model solution refinement with shared state
 - Iterative improvement via feedback and executable checks
 
-### Built-in tools
+### [Built-in tools](docs/core-modules/tools.md)
 - Python interpreter
 - Retrieval-Augmented Generation (RAG)
-- Web search
   
 
 ## Quick-start recipes
+
+Detailed quick-start commands (including script entrypoints) are documented in [quick-start.md](docs/getting-started/quick-start.md).
+
+Note: Before using the local RAG module, please follow [RAG Service Setup](docs/core-modules/tools.md#rag-service-setup).
+
 ### Agentic reasoning
 ```bash
-bash examples/generation/run_generation_informal_math_no_tool.sh # no-tool reasoning
+# no-tool reasoning
+python3 -m alphaapollo.workflows.test \
+  --model.path=Qwen/Qwen2.5-3B-Instruct \
+  --preprocess.data_source=math-ai/aime24
 ```
 ```bash
-bash examples/generation/run_generation_informal_math_tool.sh # tool-integrated reasaoning
+# tool-integrated reasoning
+python3 -m alphaapollo.workflows.test \
+  --model.path=Qwen/Qwen2.5-3B-Instruct \
+  --preprocess.data_source=math-ai/aime24 \
+  --env.informal_math.enable_python_code=true \
+  --env.informal_math.enable_local_rag=false \
+  --env.max_steps=4
+```
+
+Single-question evaluation:
+```bash
+# Select specific dataset samples (e.g., the 0th AIME test question) and test
+python3 -m alphaapollo.workflows.test \
+  --model.path=Qwen/Qwen2.5-3B-Instruct \
+  --preprocess.module=alphaapollo.data_preprocess.prepare_custom_data \
+  --preprocess.data_source=math-ai/aime24 \
+  --preprocess.splits=test \
+  --preprocess.sample_indices=0 \
+  --data.path=~/data/custom_data/test.parquet
+```
+```bash
+# Directly evaluate a plain text question (not from a dataset)
+python3 -m alphaapollo.workflows.test \
+  --model.path=Qwen/Qwen2.5-3B-Instruct \
+  --preprocess.module=alphaapollo.data_preprocess.prepare_single_question \
+  --preprocess.question_text="What is the sum of integers from 1 to 1000?" \
+  --preprocess.ground_truth="500500" \
+  --data.path=~/data/single_question/test.parquet
 ```
 
 ### Agentic learning
 ```bash
-bash examples/sft/run_sft_informal_math_no_tool.sh # vallina SFT
+# multi-turn SFT
+python3 -m alphaapollo.workflows.sft \
+  --model.partial_pretrain=Qwen/Qwen2.5-3B-Instruct \
+  --preprocess.data_source=AI-MO/NuminaMath-TIR
 ```
 ```bash
-bash examples/sft/run_sft_informal_math_tool.sh # multi-turn SFT
-```
-```bash
-bash examples/grpo/run_grpo_informal_math_no_tool.sh # vallina GRPO
-```
-```bash
-bash examples/grpo/run_grpo_informal_math_tool.sh # multi-turn GRPO
+# multi-turn RL
+python3 -m alphaapollo.workflows.rl \
+  --model.path=Qwen/Qwen2.5-3B-Instruct \
+  --preprocess.data_source=HuggingFaceH4/MATH-500 \
+  --algorithm.adv_estimator=grpo
 ```
 
 ### Agentic self-evolution
 > Before running the self-evolution scripts, make sure to serve the corresponding number of models.
 ```python 
-python utils/ray_serve_llm.py --model_path <model_path> --gpus <gpus> --port <port> --model_id <model_id>
-# python utils/ray_serve_llm.py --model_path Qwen/Qwen3-4B-Instruct-2507 --gpus "4,5" --port 9876 --model_id "qwen3_4b_inst"
+python alphaapollo/utils/ray_serve_llm.py --model_path Qwen/Qwen3-4B-Instruct-2507 --gpus "0,1" --port 8000 --model_id "qwen3_4b_inst"
 ```
 ```bash
-bash examples/evolving/run_vllm_informalmath_evolving.sh # single-model evolution
-```
-```bash
-bash examples/evolving/run_vllm_informalmath_evolving_multi_models.sh # multi-model evolution
+# single-model evolution
+python3 -m alphaapollo.workflows.evo \
+  --preprocess.data_source=math-ai/aime24 \
+  --run.dataset_name=aime24 \
+  --policy_model_cfg.model_name=qwen3_4b_inst \
+  --policy_model_cfg.base_url=http://localhost:8000/v1 \
+  --verifier_cfg.model_name=qwen3_4b_inst \
+  --verifier_cfg.base_url=http://localhost:8000/v1
 ```
 
 ## Code Structure
 
+```text
++------------------------------------------------------------------+
+| alphaapollo/data_preprocess                                      |
+| (dataset preparation scripts)                                    |
++------------------------------------------------------------------+
+                               |
+                               V
++------------------------------------------------------------------+
+| alphaapollo/core                                                 |
+| (core code)                                                      |
+|                                                                  |
+|  +----------------------+              +----------------------+  |
+|  | generation/          |              | tools/               |  |
+|  |                      | <----------> | - python_code        |  |
+|  |                      |              | - rag/               |  |
+|  +----------------------+              +----------------------+  |
+|              Λ                                                   |
+|              |                                                   |
+|              V                                                   |
+|  +------------------------------------------------------------+  |
+|  | environments/                                              |  |
+|  | - informal_math_training/                                  |  |
+|  | - informal_math_evolving/                                  |  |
+|  | - memory/                                                  |  |
+|  | - prompts/                                                 |  |
+|  +------------------------------------------------------------+  |
++------------------------------------------------------------------+
+```
+
 ### Informal Math Environment (Training): 
-- Environment package in `./agent_system/environments/informal_math_training`
-- Prompts in `./agent_system/environments/prompts/informal_math_training.py`
+- Environment package in [alphaapollo/core/environments/informal_math_training/](alphaapollo/core/environments/informal_math_training/)
+- Prompts in [alphaapollo/core/environments/prompts/informal_math_training.py](alphaapollo/core/environments/prompts/informal_math_training.py)
 
 ### Informal Math Environment (Evolving): 
-- Environment package in `./agent_system/environments/informal_math_evolving`
-- Prompts in `./agent_system/environments/prompts/informal_math_evolving.py`
+- Environment package in [alphaapollo/core/environments/informal_math_evolving/](alphaapollo/core/environments/informal_math_evolving/)
+- Prompts in [alphaapollo/core/environments/prompts/informal_math_evolving.py](alphaapollo/core/environments/prompts/informal_math_evolving.py)
 
 ### Tools (for reference)
-- Python Code implementation: `./tools/python_code.py`
-- Local RAG implementation: `./tools/rag`
-
-Note: Before using the local RAG module, please follow the instructions in `tools/rag/README.md` to set up the required environment.
-
+- Python Code implementation: [alphaapollo/core/tools/python_code.py](alphaapollo/core/tools/python_code.py)
+- RAG implementation: [alphaapollo/core/tools/rag/](alphaapollo/core/tools/rag/)
 
 
 ## Acknowledgement
