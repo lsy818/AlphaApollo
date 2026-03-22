@@ -8,6 +8,7 @@ from alphaapollo.core.tools.core import tool, ToolGroup
 from alphaapollo.core.tools.informalmath_verify import call_informalmath_verify
 from alphaapollo.core.tools.python_code import execute_python_code
 from alphaapollo.core.tools.rag.local_rag import local_rag_retrieve
+from alphaapollo.core.tools.bash import execute_bash_command
 from alphaapollo.core.tools.agent import Agent
 
 DEFAULT_TIMEOUT = 30
@@ -47,12 +48,11 @@ class InformalMathToolGroup(ToolGroup):
         self.enable_python_code = tool_config.get("enable_python_code", True)
         self.enable_local_rag = tool_config.get("enable_local_rag", True)
         self.python_code_timeout = tool_config.get("python_code_timeout", 30)
+        self.enable_bash = tool_config.get("enable_bash", True)
+        self.bash_timeout = tool_config.get("bash_timeout", 30)
 
         # Local RAG configuration
         self.rag_cfg = self._to_dict(tool_config.get("rag_cfg", {}))
-        self.enable_python_code = tool_config.get("enable_python_code", True)
-        self.enable_local_rag = tool_config.get("enable_local_rag", True)
-        self.python_code_timeout = tool_config.get("python_code_timeout", 30)
 
         # Ground truth for verification (set by environment)
         self.current_ground_truth = None
@@ -63,6 +63,8 @@ class InformalMathToolGroup(ToolGroup):
                 logger.info(f"Python code execution enabled (timeout: {self.python_code_timeout}s)")
             if self.enable_local_rag:
                 logger.info("Local RAG enabled")
+            if self.enable_bash:
+                logger.info("Bash command execution enabled")
         super().__init__(name="InformalMathToolGroup")
 
     def _to_dict(self, cfg):
@@ -298,6 +300,93 @@ class InformalMathToolGroup(ToolGroup):
                 
         except Exception as e:
             error_msg = f"Exception during local_rag query: {e}"
+            result_text = json.dumps({
+                "result": error_msg,
+                "status": "error"
+            })
+            logger.error(error_msg)
+            return {
+                "text_result": result_text,
+                "score": 0
+            }
+
+    @tool
+    def bash(self, command: str) -> Dict[str, Any]:
+        """
+        Execute Bash command locally using subprocess and return the result.
+        
+        Args:
+            command: The Bash command to execute.
+        
+        Returns:
+            A dictionary containing:
+            - text_result: JSON string with execution results
+            - score: 1 if execution successful, 0 otherwise
+        """
+        if not self.enable_bash:
+            return {
+                "text_result": json.dumps({
+                    "result": "Bash tool is not enabled.",
+                    "status": "disabled"
+                }),
+                "score": 0
+            }
+        
+        if not command or not command.strip():
+            return {
+                "text_result": json.dumps({
+                    "result": "No command provided.",
+                    "status": "error"
+                }),
+                "score": 0
+            }
+        
+        try:
+            # Execute the bash command
+            execution_result = execute_bash_command(
+                command=command,
+                timeout=self.bash_timeout,
+                log_requests=self.log_requests
+            )
+            
+            run_status = execution_result.get("run_status", "Unknown")
+            stdout = execution_result.get("stdout", "")
+            stderr = execution_result.get("stderr", "")
+            returncode = execution_result.get("returncode", -1)
+            
+            # Format the result
+            if run_status == "Finished":
+                result_text = json.dumps({
+                    "result": stdout,
+                    "stderr": stderr,
+                    "status": "success",
+                    "returncode": returncode
+                })
+                if self.log_requests:
+                    logger.info("bash: Execution successful")
+                return {
+                    "text_result": result_text,
+                    "score": 1
+                }
+            else:
+                # Timeout or Error
+                error_msg = stderr if stderr else f"Bash execution failed: {run_status}"
+                result_text = json.dumps({
+                    "result": error_msg,
+                    "stderr": stderr,
+                    "status": "failed",
+                    "returncode": returncode,
+                    "run_status": run_status
+                })
+                if self.log_requests:
+                    logger.warning(f"bash: Execution failed - {run_status}")
+                return {
+                    "text_result": result_text,
+                    "score": 0
+                }
+                
+        except Exception as e:
+            error_msg = f"Exception during bash execution: {e}"
             result_text = json.dumps({
                 "result": error_msg,
                 "status": "error"
