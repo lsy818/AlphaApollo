@@ -28,6 +28,7 @@ TOOL_CALLING_TOKENS = [
     "rag_search",
     "web_search",
     "informalmath_verify",
+    "bash",
 ]
 
 def _postprocess_action(action: str) -> str:
