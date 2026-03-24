@@ -22,6 +22,8 @@ class InformalMathEvolvingEnv(BaseTextEnv):
             "enable_python_code": getattr(env_config, "enable_python_code", True),
             "enable_local_rag": getattr(env_config, "enable_local_rag", False),
             "python_code_timeout": getattr(env_config, "python_code_timeout", 30),
+            "enable_bash": getattr(env_config, "enable_bash", True),
+            "bash_timeout": getattr(env_config, "bash_timeout", 30),
             "rag_cfg": getattr(env_config, "rag", None),
         }
         
@@ -133,6 +135,12 @@ class InformalMathEvolvingEnv(BaseTextEnv):
             if match:
                 tool_calls.append(("local_rag", match.group(1).strip()))
 
+        # Check for bash
+        if "<bash>" in action and "</bash>" in action:
+            match = re.search(r"<bash>(.*?)</bash>", action, re.DOTALL)
+            if match:
+                tool_calls.append(("bash", match.group(1).strip()))
+
         # Return None if no tool calls found (for backward compatibility)
         if not tool_calls:
             return [(None, None)]
@@ -235,6 +243,19 @@ class InformalMathEvolvingEnv(BaseTextEnv):
                         "tool_calling": True,
                         "tool_group": "InformalMathToolGroup",
                         "tool_name": "local_rag",
+                        "tool_input": tool_input,
+                        "data_source": self.data_source,
+                    }
+                elif tool_name == "bash":
+                    observation = self._execute_tool(
+                        "InformalMathToolGroup",
+                        "bash",
+                        {"command": tool_input},
+                    )
+                    tool_info = {
+                        "tool_calling": True,
+                        "tool_group": "InformalMathToolGroup",
+                        "tool_name": "bash",
                         "tool_input": tool_input,
                         "data_source": self.data_source,
                     }

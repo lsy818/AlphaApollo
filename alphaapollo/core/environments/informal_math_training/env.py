@@ -13,6 +13,7 @@ TOOL_PATTERNS = [
     ("python_code", r"<python_code>(.*?)</python_code>"),
     ("informalmath_verify", r"<informalmath_verify>(.*?)</informalmath_verify>"),
     ("local_rag", r"<local_rag>(.*?)</local_rag>"),
+    ("bash", r"<bash>(.*?)</bash>"),
 ]
 
 class InformalMathTrainingEnv(BaseTextEnv):
@@ -28,6 +29,8 @@ class InformalMathTrainingEnv(BaseTextEnv):
             "enable_python_code": getattr(env_config, "enable_python_code", True),
             "enable_local_rag": getattr(env_config, "enable_local_rag", True),
             "python_code_timeout": getattr(env_config, "python_code_timeout", 30),
+            "enable_bash": getattr(env_config, "enable_bash", True),
+            "bash_timeout": getattr(env_config, "bash_timeout", 30),
             "rag_cfg": getattr(env_config, "rag", None),
         }
         
@@ -221,6 +224,21 @@ class InformalMathTrainingEnv(BaseTextEnv):
                             "data_source": self.data_source,
                             "error": "Invalid JSON"
                         }
+                elif tool_name == "bash":
+                    tool_output = super()._execute_tool(
+                        "InformalMathToolGroup",
+                        "bash",
+                        {"command": tool_input}
+                    )
+                    tool_info = {
+                        "tool_calling": True,
+                        "tool_group": "InformalMathToolGroup",
+                        "tool_name": "bash",
+                        "tool_input": tool_input,
+                        "data_source": self.data_source,
+                    }
+                    text_result = tool_output.get("text_result", "")
+                    observation = "\n<tool_response>" + text_result + "</tool_response>\n"
 
             # Wrap the observation properly as a message
             if observation:
