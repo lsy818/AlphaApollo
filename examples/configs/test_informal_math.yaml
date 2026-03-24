@@ -40,4 +40,5 @@ runner:
     - env.informal_math.python_code_timeout=30
     - env.informal_math.enable_python_code=true
     - env.informal_math.enable_local_rag=false
-
+    - env.informal_math.enable_bash=false
+    - env.informal_math.bash_timeout=30

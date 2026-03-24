@@ -76,16 +76,20 @@ env:
     memory_type: simple
     log_requests: false
     python_code_timeout: 30
+    bash_timeout: 30
     enable_verify: false
     enable_python_code: true # whether to enable python code execution
     enable_local_rag: true # whether to enable local RAG tool
+    enable_bash: false # whether to enable bash code execution
   informal_math_training:
     memory_type: simple
     log_requests: false
     python_code_timeout: 30
+    bash_timeout: 30
     enable_verify: false
     enable_python_code: true # whether to enable python code execution
     enable_local_rag: true # whether to enable local RAG tool
+    enable_bash: true # whether to enable bash code execution
   mol_optim:
     memory_type: simple
     timeout: 5
