@@ -21,7 +21,8 @@ Now it's your turn to respond to the current step.
 You should first conduct the reasoning process. This process MUST be enclosed within <think> </think> tags. 
 After completing your reasoning, choose only one of the following actions (do not perform both):
 1) <python_code>...</python_code>: If computation/checking is helpful, emit exactly ONE <python_code>...</python_code> block with pure Python 3. Inspect the <tool_response> (stdout from your code). If it disagrees with your reasoning, correct yourself.
-2) <answer>...</answer>: If you are ready to provide the self-contained solution, provide the answer only inside <answer>...</answer>, formatted in LaTeX, e.g., \\boxed{{...}}.
+2) <bash>...</bash>: If system/file operations or bash utilities (e.g., bc, grep) are helpful, emit exactly ONE <bash>...</bash> block containing a pure bash command. Inspect the <tool_response> (stdout/stderr). If it fails or disagrees with your reasoning, correct yourself.
+3) <answer>...</answer>: If you are ready to provide the self-contained solution, provide the answer only inside <answer>...</answer>, formatted in LaTeX, e.g., \\boxed{{...}}.
 """
 
 INFORMAL_MATH_TEMPLATE_WITH_HIS = """
@@ -37,7 +38,8 @@ Now it's your turn to respond to the current step.
 You should first conduct the reasoning process. This process MUST be enclosed within <think> </think> tags. 
 After completing your reasoning, choose only one of the following actions (do not perform both):
 1) <python_code>...</python_code>: If computation/checking is helpful, emit exactly ONE <python_code>...</python_code> block with pure Python 3. Inspect the <tool_response> (stdout from your code). If it disagrees with your reasoning, correct yourself.
-2) <answer>...</answer>: If you are ready to provide the self-contained solution, provide the answer only inside <answer>...</answer>, formatted in LaTeX, e.g., \\boxed{{...}}.
+2) <bash>...</bash>: If system/file operations or bash utilities (e.g., bc, grep) are helpful, emit exactly ONE <bash>...</bash> block containing a pure bash command. Inspect the <tool_response> (stdout/stderr). If it fails or disagrees with your reasoning, correct yourself.
+3) <answer>...</answer>: If you are ready to provide the self-contained solution, provide the answer only inside <answer>...</answer>, formatted in LaTeX, e.g., \\boxed{{...}}.
 """
 
 INFORMAL_MATH_TEMPLATE_RAG_NO_HIS = """
@@ -49,8 +51,9 @@ Now it's your turn to respond to the current step.
 You should first conduct the reasoning process. This process MUST be enclosed within <think> </think> tags. 
 After completing your reasoning, choose only one of the following actions (do not perform multiple actions at the same time):
 1) <python_code>...</python_code>: If computation/checking is helpful, emit exactly ONE <python_code>...</python_code> block with pure Python 3. Inspect the <tool_response> (stdout from your code). If it disagrees with your reasoning, correct yourself.
-2) <local_rag>...</local_rag>: You have access to a RAG System tool to search for documentation or examples (Supported repos: sympy, scipy, numpy, math, cmath, fractions, itertools). Emit exactly ONE <local_rag>...</local_rag> block with a JSON object. Inspect the returned <tool_response> (RAG result). If it disagrees with your reasoning, correct yourself. For example: <local_rag>{{"repo_name": "sympy", "query": "your query here"}}</local_rag>.
-3) <answer>...</answer>: If you are ready to provide the self-contained solution, provide the answer only inside <answer>...</answer>, formatted in LaTeX, e.g., \\boxed{{...}}.
+2) <bash>...</bash>: If system/file operations or bash utilities (e.g., bc, grep) are helpful, emit exactly ONE <bash>...</bash> block containing a pure bash command. Inspect the <tool_response> (stdout/stderr). If it fails or disagrees with your reasoning, correct yourself.
+3) <local_rag>...</local_rag>: You have access to a RAG System tool to search for documentation or examples (Supported repos: sympy, scipy, numpy, math, cmath, fractions, itertools). Emit exactly ONE <local_rag>...</local_rag> block with a JSON object. Inspect the returned <tool_response> (RAG result). If it disagrees with your reasoning, correct yourself. For example: <local_rag>{{"repo_name": "sympy", "query": "your query here"}}</local_rag>.
+4) <answer>...</answer>: If you are ready to provide the self-contained solution, provide the answer only inside <answer>...</answer>, formatted in LaTeX, e.g., \\boxed{{...}}.
 """
 
 INFORMAL_MATH_TEMPLATE_RAG_WITH_HIS = """
@@ -66,8 +69,9 @@ Now it's your turn to respond to the current step.
 You should first conduct the reasoning process. This process MUST be enclosed within <think> </think> tags. 
 After completing your reasoning, choose only one of the following actions (do not perform multiple actions at the same time):
 1) <python_code>...</python_code>: If computation/checking is helpful, emit exactly ONE <python_code>...</python_code> block with pure Python 3. Inspect the <tool_response> (stdout from your code). If it disagrees with your reasoning, correct yourself.
-2) <local_rag>...</local_rag>: You have access to a RAG System tool to search for documentation or examples (Supported repos: sympy, scipy, numpy, math, cmath, fractions, itertools). Emit exactly ONE <local_rag>...</local_rag> block with a JSON object. Inspect the returned <tool_response> (RAG result). If it disagrees with your reasoning, correct yourself. For example: <local_rag>{{"repo_name": "sympy", "query": "your query here"}}</local_rag>.
-3) <answer>...</answer>: If you are ready to provide the self-contained solution, provide the answer only inside <answer>...</answer>, formatted in LaTeX, e.g., \\boxed{{...}}.
+2) <bash>...</bash>: If system/file operations or bash utilities (e.g., bc, grep) are helpful, emit exactly ONE <bash>...</bash> block containing a pure bash command. Inspect the <tool_response> (stdout/stderr). If it fails or disagrees with your reasoning, correct yourself.
+3) <local_rag>...</local_rag>: You have access to a RAG System tool to search for documentation or examples (Supported repos: sympy, scipy, numpy, math, cmath, fractions, itertools). Emit exactly ONE <local_rag>...</local_rag> block with a JSON object. Inspect the returned <tool_response> (RAG result). If it disagrees with your reasoning, correct yourself. For example: <local_rag>{{"repo_name": "sympy", "query": "your query here"}}</local_rag>.
+4) <answer>...</answer>: If you are ready to provide the self-contained solution, provide the answer only inside <answer>...</answer>, formatted in LaTeX, e.g., \\boxed{{...}}.
 """
 
 INFORMAL_MATH_TEMPLATE_RAG_ONLY_NO_HIS = """
