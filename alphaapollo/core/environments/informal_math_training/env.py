@@ -25,13 +25,14 @@ class InformalMathTrainingEnv(BaseTextEnv):
         super().__init__()
         
         # Build tool_config dict for tool group initialization
+        math_config = getattr(env_config, "informal_math", env_config)
         tool_config = {
-            "enable_python_code": getattr(env_config, "enable_python_code", True),
-            "enable_local_rag": getattr(env_config, "enable_local_rag", True),
-            "python_code_timeout": getattr(env_config, "python_code_timeout", 30),
-            "enable_bash": getattr(env_config, "enable_bash", True),
-            "bash_timeout": getattr(env_config, "bash_timeout", 30),
-            "rag_cfg": getattr(env_config, "rag", None),
+            "enable_python_code": getattr(math_config, "enable_python_code", False),
+            "enable_local_rag": getattr(math_config, "enable_local_rag", False),
+            "python_code_timeout": getattr(math_config, "python_code_timeout", 30),
+            "enable_bash": getattr(math_config, "enable_bash", False),
+            "bash_timeout": getattr(math_config, "bash_timeout", 30),
+            "rag_cfg": getattr(math_config, "rag", None),
         }
         
         # Initialize the tools

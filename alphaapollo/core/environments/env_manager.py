@@ -206,15 +206,26 @@ class InformalMathEvolvingEnvironmentManager(EnvironmentManagerBase):
         elif not init:
             memory_ctx = ["" for _ in range(len(text_obs))]
         
-        # Set python code and local_rag flags
+        # Set python code, local_rag and bash flags
         enable_python_code = bool(OmegaConf.select(self.config, "env.informal_math_evolving.enable_python_code") or False)
         enable_local_rag = bool(OmegaConf.select(self.config, "env.informal_math_evolving.enable_local_rag") or False)
+        enable_bash = bool(OmegaConf.select(self.config, "env.informal_math_evolving.enable_bash") or False)
+
+        # Get execution mode (default to agentic)
+        execution_mode = str(OmegaConf.select(self.config, "env.informal_math_evolving.execution_mode") or "agentic")
+        
+        # Build tool_config dict for prompt generation
+        tool_config = {
+            "enable_python_code": enable_python_code,
+            "enable_local_rag": enable_local_rag,
+            "enable_bash": enable_bash,
+        }
 
         for i in range(len(text_obs)):
             if init:
                 if verifier:
-                    # prompt for verifier agent
-                    template = get_verifier_prompt(enable_python_code, use_history=False)
+                    # prompt for policy agent
+                    template = get_verifier_prompt(enable_python_code=enable_python_code, use_history=False, tool_config=tool_config)
                     obs_i = template.format(
                         question=self.tasks[i],
                         policy_solution=text_obs[i],
@@ -225,14 +236,14 @@ class InformalMathEvolvingEnvironmentManager(EnvironmentManagerBase):
                     self.policy_solutions[i] = text_obs[i]
                 else:
                     # prompt for policy agent
-                    template = get_policy_prompt(enable_python_code, use_history=False, use_previous_solutions=use_previous_solutions, enable_local_rag=enable_local_rag)
+                    template = get_policy_prompt(enable_python_code=enable_python_code, use_history=False, use_previous_solutions=use_previous_solutions, enable_local_rag=enable_local_rag, tool_config=tool_config)
                     # DEBUG: Check if template contains local_rag
                     has_local_rag_in_prompt = "<local_rag>" in template
                     obs_i = template.format(question=self.tasks[i], previous_solutions=previous_solutions)
             else:
                 memory_entry = "" if not memory_ctx else memory_ctx[i]
                 if verifier:
-                    template = get_verifier_prompt(enable_python_code, use_history=True)
+                    template = get_verifier_prompt(enable_python_code=enable_python_code, use_history=True, tool_config=tool_config)
                     # Use stored policy solution
                     policy_sol = self.policy_solutions.get(i, "") if hasattr(self, 'policy_solutions') else ""
                     obs_i = template.format(
@@ -243,7 +254,7 @@ class InformalMathEvolvingEnvironmentManager(EnvironmentManagerBase):
                     )
                 else:
                     # default prompt
-                    template = get_policy_prompt(enable_python_code, use_history=True, use_previous_solutions=use_previous_solutions, enable_local_rag=enable_local_rag)
+                    template = get_policy_prompt(enable_python_code=enable_python_code, use_history=True, use_previous_solutions=use_previous_solutions, enable_local_rag=enable_local_rag, tool_config=tool_config)
                     # DEBUG: Check if template contains local_rag
                     has_local_rag_in_prompt = "<local_rag>" in template
                     obs_i = template.format(
@@ -366,6 +377,8 @@ class InformalMathTrainingEnvironmentManager(EnvironmentManagerBase):
         enable_python_code = bool(OmegaConf.select(self.config, "env.informal_math.enable_python_code") or False)
         # Set rag system flag
         enable_local_rag = bool(OmegaConf.select(self.config, "env.informal_math.enable_local_rag") or False)
+        # Set bash code flag
+        enable_bash = bool(OmegaConf.select(self.config, "env.informal_math.enable_bash") or False)
         # Get execution mode (default to agentic)
         execution_mode = str(OmegaConf.select(self.config, "env.informal_math.execution_mode") or "agentic")
         
@@ -373,6 +386,7 @@ class InformalMathTrainingEnvironmentManager(EnvironmentManagerBase):
         tool_config = {
             "enable_python_code": enable_python_code,
             "enable_local_rag": enable_local_rag,
+            "enable_bash": enable_bash,
         }
         
         for i in range(len(text_obs)):
