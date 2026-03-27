@@ -417,27 +417,34 @@ Summarize:
 {content}
 """
 
-def get_policy_prompt(enable_python_code=True, use_history=False, use_previous_solutions=False, enable_local_rag=False) -> str:
+def get_policy_prompt(enable_python_code=True, use_history=False, use_previous_solutions=False, enable_local_rag=False, tool_config=None) -> str:
    """Return the appropriate policy prompt template."""
+   from alphaapollo.core.environments.prompts import filter_prompt_tools
+   enable_bash = tool_config.get("enable_bash", True) if tool_config else True
    if enable_local_rag:
       # Local RAG prompts (with python code support)
       if use_previous_solutions:
-         return INFORMAL_MATH_TEMPLATE_WITH_LOCAL_RAG_WITH_PREVIOUS_SOLUTIONS_WITH_HIS if use_history else INFORMAL_MATH_TEMPLATE_WITH_LOCAL_RAG_WITH_PREVIOUS_SOLUTIONS_NO_HIS
+         template = INFORMAL_MATH_TEMPLATE_WITH_LOCAL_RAG_WITH_PREVIOUS_SOLUTIONS_WITH_HIS if use_history else INFORMAL_MATH_TEMPLATE_WITH_LOCAL_RAG_WITH_PREVIOUS_SOLUTIONS_NO_HIS
       else:
-         return INFORMAL_MATH_TEMPLATE_WITH_LOCAL_RAG_WITH_HIS if use_history else INFORMAL_MATH_TEMPLATE_WITH_LOCAL_RAG_NO_HIS
-   elif enable_python_code:
+         template = INFORMAL_MATH_TEMPLATE_WITH_LOCAL_RAG_WITH_HIS if use_history else INFORMAL_MATH_TEMPLATE_WITH_LOCAL_RAG_NO_HIS
+   elif enable_python_code or enable_bash:
       if use_previous_solutions:
-         return INFORMAL_MATH_TEMPLATE_WITH_PREVIOUS_SOLUTIONS_WITH_HIS if use_history else INFORMAL_MATH_TEMPLATE_WITH_PREVIOUS_SOLUTIONS_NO_HIS
+         template = INFORMAL_MATH_TEMPLATE_WITH_PREVIOUS_SOLUTIONS_WITH_HIS if use_history else INFORMAL_MATH_TEMPLATE_WITH_PREVIOUS_SOLUTIONS_NO_HIS
       else:
-         return INFORMAL_MATH_TEMPLATE_WITH_HIS if use_history else INFORMAL_MATH_TEMPLATE_NO_HIS
+         template = INFORMAL_MATH_TEMPLATE_WITH_HIS if use_history else INFORMAL_MATH_TEMPLATE_NO_HIS
    else:
       if use_previous_solutions:
-         return INFORMAL_MATH_TEMPLATE_WITH_PREVIOUS_SOLUTIONS_NO_TOOL_WITH_HIS if use_history else INFORMAL_MATH_TEMPLATE_WITH_PREVIOUS_SOLUTIONS_NO_TOOL_NO_HIS
+         template = INFORMAL_MATH_TEMPLATE_WITH_PREVIOUS_SOLUTIONS_NO_TOOL_WITH_HIS if use_history else INFORMAL_MATH_TEMPLATE_WITH_PREVIOUS_SOLUTIONS_NO_TOOL_NO_HIS
       else:
-         return INFORMAL_MATH_TEMPLATE_NO_TOOL_WITH_HIS if use_history else INFORMAL_MATH_TEMPLATE_NO_TOOL_NO_HIS
+         template = INFORMAL_MATH_TEMPLATE_NO_TOOL_WITH_HIS if use_history else INFORMAL_MATH_TEMPLATE_NO_TOOL_NO_HIS
+   return filter_prompt_tools(template, tool_config)
 
-def get_verifier_prompt(enable_python_code=True, use_history=False) -> str:
+def get_verifier_prompt(enable_python_code=True, use_history=False, tool_config=None) -> str:
    """Return the appropriate verifier prompt template."""
-   if enable_python_code:
-      return VERIFIER_AGENT_TEMPLATE_WITH_HIS if use_history else VERIFIER_AGENT_TEMPLATE_NO_HIS
-   return VERIFIER_AGENT_TEMPLATE_NO_TOOL_WITH_HIS if use_history else VERIFIER_AGENT_TEMPLATE_NO_TOOL_NO_HIS
+   from alphaapollo.core.environments.prompts import filter_prompt_tools
+   enable_bash = tool_config.get("enable_bash", True) if tool_config else True
+   if enable_python_code or enable_bash:
+      template = VERIFIER_AGENT_TEMPLATE_WITH_HIS if use_history else VERIFIER_AGENT_TEMPLATE_NO_HIS
+   else:
+      template = VERIFIER_AGENT_TEMPLATE_NO_TOOL_WITH_HIS if use_history else VERIFIER_AGENT_TEMPLATE_NO_TOOL_NO_HIS
+   return filter_prompt_tools(template, tool_config)

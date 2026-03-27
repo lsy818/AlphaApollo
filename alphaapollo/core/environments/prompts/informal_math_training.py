@@ -103,6 +103,7 @@ After completing your reasoning, choose only one of the following actions (do no
 """
 
 def get_policy_training_prompt(use_history=False, max_steps=8, tool_config=None) -> str:
+   from alphaapollo.core.environments.prompts import filter_prompt_tools
    """
    Get the policy training prompt based on tool configuration.
    
@@ -110,11 +111,11 @@ def get_policy_training_prompt(use_history=False, max_steps=8, tool_config=None)
        use_history: Whether to include history in the prompt
        max_steps: Maximum number of steps allowed
        tool_config: Dict with tool enable flags. 
-                    Supported keys: "enable_python_code", "enable_local_rag"
-                    Defaults to {"enable_python_code": True, "enable_local_rag": True}
+                    Supported keys: "enable_python_code", "enable_local_rag", "enable_bash"
+                    Defaults to {"enable_python_code": True, "enable_local_rag": True, "enable_bash": True}
    
    Example:
-       tool_config = {"enable_python_code": True, "enable_local_rag": False}
+       tool_config = {"enable_python_code": True, "enable_local_rag": False, "enable_bash": False}
        prompt = get_policy_training_prompt(use_history=True, tool_config=tool_config)
    """
    if tool_config is None:
@@ -122,15 +123,18 @@ def get_policy_training_prompt(use_history=False, max_steps=8, tool_config=None)
    
    enable_python_code = tool_config.get("enable_python_code", True)
    enable_local_rag = tool_config.get("enable_local_rag", True)
+   enable_bash = tool_config.get("enable_bash", True)
 
    if max_steps == 1:
-      return INFORMAL_MATH_TEMPLATE_NO_TOOL
+      return filter_prompt_tools(INFORMAL_MATH_TEMPLATE_NO_TOOL, tool_config)
 
-   if enable_local_rag and enable_python_code:
-        return INFORMAL_MATH_TEMPLATE_RAG_WITH_HIS if use_history else INFORMAL_MATH_TEMPLATE_RAG_NO_HIS
-   
-   if enable_local_rag and not enable_python_code:
-       return INFORMAL_MATH_TEMPLATE_RAG_ONLY_WITH_HIS if use_history else INFORMAL_MATH_TEMPLATE_RAG_ONLY_NO_HIS
+   if enable_local_rag:
+       if enable_python_code or enable_bash:
+           template = INFORMAL_MATH_TEMPLATE_RAG_WITH_HIS if use_history else INFORMAL_MATH_TEMPLATE_RAG_NO_HIS
+       else:
+           template = INFORMAL_MATH_TEMPLATE_RAG_ONLY_WITH_HIS if use_history else INFORMAL_MATH_TEMPLATE_RAG_ONLY_NO_HIS
+   else:
+       template = INFORMAL_MATH_TEMPLATE_WITH_HIS  if use_history else INFORMAL_MATH_TEMPLATE_NO_HIS
 
-   return INFORMAL_MATH_TEMPLATE_WITH_HIS  if use_history else INFORMAL_MATH_TEMPLATE_NO_HIS
+   return filter_prompt_tools(template, tool_config)
 
